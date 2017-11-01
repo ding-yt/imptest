@@ -65,15 +65,25 @@ while(<FILE>){
 	}elsif(/VT=SNP/){
 		$count ++;
 		if ($count % 50000 ==0){
-			&write_seq_per_sample($seq,$output);
+			#&write_seq_per_sample($seq,$output);
 			foreach (@samples){
+				my $l1 = length($seq->{$_}->[0]);
+				my $l2 = length($seq->{$_}->[1]); 
+				print "$_:\t$1\t$l2\n";
 				$seq->{$_}->[0] = ();
 				$seq->{$_}->[1] = ();
 			}
 		}
-		my @temp = split /\s+/, $_; 
+		my $line = $_;
+		my @temp = split /\s+/, $line; 
 		my @allel = split /,/, $temp[4];
 		unshift @allel, $temp[3];
+		for (my $i=0; $i<$#allel;$i++){
+			if(length($allel[$i]) != 1){
+				print "$temp[3]\t$temp[4]\n";
+			}
+		}
+		
 		for (my $i=9; $i<=$#temp;$i++){
 			my @hap = split /\|/, $temp[$i];
 			$seq->{$samples[$i-9]}->[0] .= $allel[$hap[0]];
