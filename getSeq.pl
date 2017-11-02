@@ -51,6 +51,7 @@ sub write_seq_per_sample(){
 my @samples;
 my $seq;
 my $count = 0;
+my $diff_length_SNP_count = 0;
 
 open (FILE, "$input") or die "can't open $input\n";
 while(<FILE>){
@@ -64,24 +65,54 @@ while(<FILE>){
 		print ("total sample: $#samples+1\n");
 	}elsif(/VT=SNP/){
 		$count ++;
-		if ($count % 50000 ==0){
+		if ($count % 10000 ==0){
 			#&write_seq_per_sample($seq,$output);
 			foreach (@samples){
 				my $l1 = length($seq->{$_}->[0]);
 				my $l2 = length($seq->{$_}->[1]); 
-				print "$_:\t$1\t$l2\n";
+				print "$_:$l1 $l2\t";
 				$seq->{$_}->[0] = ();
 				$seq->{$_}->[1] = ();
 			}
+			print "\n";
 		}
 		my $line = $_;
 		my @temp = split /\s+/, $line; 
-		my @allel = split /,/, $temp[4];
-		unshift @allel, $temp[3];
-		for (my $i=0; $i<$#allel;$i++){
-			if(length($allel[$i]) != 1){
-				print "$temp[3]\t$temp[4]\n";
+		my @allel = split /,/, $temp[4]; #alt
+		unshift @allel, $temp[3]; # ref is $temp[3]
+		
+		my $lengthdiff = 0;
+		my $max_length = length($temp[3]);
+		for (my $i=0; $i<=$#allel;$i++){
+			if(length($allel[$i]) != length($temp[3])){
+				print "$temp[0] $temp[1]: $temp[3]\t$temp[4]\n";
+				$lengthdiff = 1;
 			}
+			if (length($allel[$i]) > $max_length){
+				$max_length = length($allel[$i]);
+			}
+		
+		}
+		$diff_length_SNP_count += $lengthdiff;
+		
+		if ($lengthdiff == 1){
+			print "max length: $max_length\n";
+			for (my $i=0; $i<=$#allel;$i++){
+				my $add = $max_length - length($allel[$i]);
+				#print "add $add ";
+				for (my $j=0; $j<$add;$j++){
+					$allel[$i] .= "-";
+				}
+			}
+			#print "\n";
+		
+		}
+		
+		for (my $i=1; $i<=$#allel;$i++){
+			if(length($allel[$i]) != length($allel[0])){
+				print "Padded $temp[0] $temp[1]: $allel[0]\t$allel[$i]\n";
+			}
+			
 		}
 		
 		for (my $i=9; $i<=$#temp;$i++){
@@ -89,12 +120,14 @@ while(<FILE>){
 			$seq->{$samples[$i-9]}->[0] .= $allel[$hap[0]];
 			$seq->{$samples[$i-9]}->[1] .= $allel[$hap[1]];
 		}
+	
 	}
 
 }
 close FILE;
 
-&write_seq_per_sample($seq,$output);
+#&write_seq_per_sample($seq,$output);
 #print ("$seq->{$samples[$i-9]}->[0] \n");
 select STDOUT;
 print ("total SNP $count\n");
+print ("SNP with different length $diff_length_SNP_count\n")
