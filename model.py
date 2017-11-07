@@ -108,6 +108,29 @@ def generate_epoch_list(datalist, batch_size, num_steps):
 # 			yield (x, y)
 #         
   
+### function 1: read file list form directory  , return file list
+def _readDir(dirpath): 
+	allsample_dir = dirpath
+	samplefiles = [join(allsample_dir, f) for f in os.listdir(allsample_dir) if isfile(join(allsample_dir, f))]
+	return samplefiles
+
+### function 2: split file list to batches (and slices), return string batches
+def _batch_read(filelist, batch_size):
+	oneBatch = []
+	batches = []
+	batch = np.array(filelist, (batch_size,-1))
+	print(batch)
+	#for i in range(0,len(filelist),batch_size):
+	#	oneBatch = filelist[i:i+batch_size-1];
+	#	batches.append(oneBatch)
+	return batch
+	
+	
+	
+
+### function 3: string batch embedding
+
+
 """
 Train the network
 """
@@ -310,11 +333,15 @@ learning_rate = 1e-3
 build_with_dropout=False
 
 
-#rawdata_path = '/dscrhome/yd44/imputation/testdata' #'/work/yd44/imputation/sample_perl'
-rawdata_path = '/work/yd44/imputation/sample_perl'
+rawdata_path = '/dscrhome/yd44/imputation/testdata' #'/work/yd44/imputation/sample_perl'
+#rawdata_path = '/work/yd44/imputation/sample_perl'
 
 chr = 'chr1'
 num_epochs = 20
+
+l = _readDir('/dscrhome/yd44/imputation/testdata/chr1')
+_batch_read(l,2)
+
 
 t = time.time()
 g = build_lstm_graph(
