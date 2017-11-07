@@ -1,8 +1,8 @@
 #!/bin/sh
-#SBATCH --output=/work/yd44/imputation/log/model.log
-#SBATCH --job-name=mtest
-#SBATCH --error=/work/yd44/imputation/log/model.error
-#SBATCH --mem=5G
+#SBATCH --output=/work/yd44/imputation/log/model2.log
+#SBATCH --job-name=mtest2
+#SBATCH --error=/work/yd44/imputation/log/model2.error
+#SBATCH --mem=20G
 #SBATCH --partition=gpu-common
 #SBATCH --gres=gpu:1
 
