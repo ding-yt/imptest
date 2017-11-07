@@ -65,8 +65,8 @@ while(<FILE>){
 		print ("total sample: $#samples+1\n");
 	}elsif(/VT=SNP/){
 		$count ++;
-		if ($count % 10000 ==0){
-			#&write_seq_per_sample($seq,$output);
+		if ($count % 50000 ==0){
+			&write_seq_per_sample($seq,$output);
 			foreach (@samples){
 				my $l1 = length($seq->{$_}->[0]);
 				my $l2 = length($seq->{$_}->[1]); 
@@ -75,6 +75,7 @@ while(<FILE>){
 				$seq->{$_}->[1] = ();
 			}
 			print "\n";
+			#last;
 		}
 		my $line = $_;
 		my @temp = split /\s+/, $line; 
@@ -96,7 +97,7 @@ while(<FILE>){
 		$diff_length_SNP_count += $lengthdiff;
 		
 		if ($lengthdiff == 1){
-			print "max length: $max_length\n";
+			#print "max length: $max_length\n";
 			for (my $i=0; $i<=$#allel;$i++){
 				my $add = $max_length - length($allel[$i]);
 				#print "add $add ";
@@ -108,17 +109,22 @@ while(<FILE>){
 		
 		}
 		
-		for (my $i=1; $i<=$#allel;$i++){
-			if(length($allel[$i]) != length($allel[0])){
-				print "Padded $temp[0] $temp[1]: $allel[0]\t$allel[$i]\n";
-			}
-			
-		}
+		#for (my $i=1; $i<=$#allel;$i++){
+		#	if(length($allel[$i]) != length($allel[0])){
+		#		print "Padded $temp[0] $temp[1]: $allel[0]\t$allel[$i]\n";
+		#	}
+		#	
+		#}
 		
+		if ($lengthdiff == 0){
 		for (my $i=9; $i<=$#temp;$i++){
 			my @hap = split /\|/, $temp[$i];
+			if ( $hap[0] =~ /[^\d]/ or $hap[1] =~ /[^\d]/){
+				print "$hap[0]\t$hap[1]\n";
+			}
 			$seq->{$samples[$i-9]}->[0] .= $allel[$hap[0]];
 			$seq->{$samples[$i-9]}->[1] .= $allel[$hap[1]];
+		}
 		}
 	
 	}
@@ -126,7 +132,7 @@ while(<FILE>){
 }
 close FILE;
 
-#&write_seq_per_sample($seq,$output);
+&write_seq_per_sample($seq,$output);
 #print ("$seq->{$samples[$i-9]}->[0] \n");
 select STDOUT;
 print ("total SNP $count\n");
