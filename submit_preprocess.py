@@ -7,7 +7,7 @@ shell_dir = '/dscrhome/yd44/imputation/shell'
 log_dir = '/work/yd44/imputation/log'
 gz_dir = '/work/yd44/imputation'
 preprocess_script = '/dscrhome/yd44/imputation/testPyvcf.py'
-preprocess_script_perl = '/dscrhome/yd44/imputation/getSeq.pl'
+preprocess_script_perl = '/dscrhome/yd44/imputation/script/imptest/getSeq.pl'
 
 #chrom_list = [1,2,3,4,5,6,7,8,9,11,20,21,22]
 #chrom_list = [10]
