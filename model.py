@@ -26,10 +26,10 @@ def _get_chrom(dirpath,chr): # read all samples for selected chrom under specifi
 	#allsample_dir = dirpath + '/' + chr
 	allsample_dir = dirpath
 	samplefiles = [join(allsample_dir, f) for f in os.listdir(allsample_dir) if isfile(join(allsample_dir, f))]
-	data = [ _read_file(f) for f in samplefiles[0:9]]
+	data = [ _read_file(f) for f in samplefiles[0:4] ]
 	#print(data)
 	return data
-
+	
 def _prepare_raw_data(trainpath, devpath, testpath, chr, num_class): # read train, dev, test data and coded as one hot
 	train_data = tf.one_hot(_get_chrom(trainpath,chr), num_class) # sample number x seq length x class number
 	print("train data size: ",train_data.get_shape())
@@ -68,15 +68,45 @@ def generate_batch(data, batch_size, num_steps): # generate batches from input d
 			#print("x ",x.get_shape())
 			yield (x, y)
 
-# def generate_epoch(data, num_epoch, batch_size, num_steps):
-# 	for i in range(num_epoch):
-# 		yield generate_batch(data.random_shuffle(), batch_size, num_steps)
 
 def generate_epoch(data, batch_size, num_steps):
 	#for i in range(num_epoch):
 	return generate_batch(tf.random_shuffle(data), batch_size, num_steps)
-               
-        
+
+def _get_chrom_from_list(samplelist,start,end): # read all samples for selected chrom under specific dir (train, dev, test), return a list of all sample seq
+	data = [ _read_file(f) for f in samplelist[start,end] ]
+	#print(data)
+	data = tf.one_hot(data,num_class)
+	return data
+
+def generate_epoch_list(datalist, batch_size, num_steps):
+	return generate_batch(tf.random_shuffle(datalist), batch_size, num_steps)
+
+# def generate_batch_from_list(datalist, batch_size, num_steps): # generate batches from input data, discard the data that smaller than batch_size x num_step
+# 	#rows, columns, depth = map(lambda i: i.value, data.get_shape())
+# 	rows = len(datalist)
+# 	print("num datafile ",rows)
+# 	#print("row ",rows," column ",columns, "depth ",depth)
+# 	#num_slice = columns // num_steps
+# 	num_batch = rows // batch_size
+# 	#print("num_slice ",num_slice, "num_batch", num_batch)
+# 	
+# 	#total_batch = num_slice * num_batch
+# 	#chop_data = data[:num_batch*batch_size, :num_slice*num_steps+1,:]
+# 	#print("data ",type(data))
+# 	#print("data ",data.get_shape())
+# 	#print("chop ",chop_data.get_shape())
+# 	
+# 	
+# 	for i in range(num_batch):
+# 		batch = _get_chrom_from_list(datalist,i*batch_size,(i+1)*batch_size)
+# 	
+# 		for j in range(num_slice):
+# 			x = chop_data[i*batch_size:(i+1)*batch_size, j * num_steps:(j + 1) * num_steps, :]
+# 			y = chop_data[i*batch_size:(i+1)*batch_size, j * num_steps+1:(j + 1) * num_steps+1, :]
+# 			#print("x ",x.get_shape())
+# 			yield (x, y)
+#         
   
 """
 Train the network
@@ -98,6 +128,7 @@ def train_network(g, rawdata_path, chr = 'chr1', num_epochs=2, num_steps = 20, b
         #for epoch in ep:
         
         for idx in range(num_epochs):
+        	print("\n================= EPOCH ",idx,"===================")
         	epoch = generate_epoch(data['train'], batch_size, num_steps)
         #for epoch in enumerate(generate_epoch(data['train'], num_epoch, batch_size, num_steps)):
         	avg_cost = 0.0
@@ -106,7 +137,7 @@ def train_network(g, rawdata_path, chr = 'chr1', num_epochs=2, num_steps = 20, b
         	e = batch_size
         	
         	for X, Y in generate_epoch(data['train'], batch_size, num_steps):
-        		#print("X ",type(X))
+        		#print("X ",X.get_shape())
         		
         		steps += 1
         		feed_dict={g['x']: X.eval(), g['y']: Y.eval()}
@@ -126,7 +157,7 @@ def train_network(g, rawdata_path, chr = 'chr1', num_epochs=2, num_steps = 20, b
         		#print("training_state ",type(training_state))											
         													
         		
-        		if verbose:
+        		if verbose and steps % 100 == 1:
         			print("Average training loss for Epoch", idx, ":", training_loss_/steps)
         			print("Average accuracy for Epoch", idx, ":", accuracy)
         					
@@ -134,6 +165,7 @@ def train_network(g, rawdata_path, chr = 'chr1', num_epochs=2, num_steps = 20, b
         		
         test_losses = []
         test_accuracies = []
+        print("\n================= TEST ===================")
         for X, Y in generate_epoch(data['test'], batch_size, num_steps):
         	feed_dict={g['x']: X.eval(), g['y']: Y.eval()}
         	test_loss, test_accuracy, predicts, ylabel,x_in = sess.run([g['total_loss'],
@@ -185,7 +217,7 @@ def reset_graph():
 def build_lstm_graph(
     state_size = 128,
     num_classes = 4,
-    batch_size = 32,
+    batch_size = 2,
     num_steps = 100,
     num_layers = 2,
     learning_rate = 1e-3,
@@ -269,18 +301,20 @@ def build_lstm_graph(
 
 
 ######################################
-state_size = 128
+state_size = 8
 num_classes = 4
 batch_size = 2
-num_steps = 100
+num_steps = 20
 num_layers = 2
 learning_rate = 1e-3
 build_with_dropout=False
 
 
-rawdata_path = '/dscrhome/yd44/imputation/testdata' #'/work/yd44/imputation/sample_perl'
+#rawdata_path = '/dscrhome/yd44/imputation/testdata' #'/work/yd44/imputation/sample_perl'
+rawdata_path = '/work/yd44/imputation/sample_perl'
+
 chr = 'chr1'
-num_epochs = 2
+num_epochs = 20
 
 t = time.time()
 g = build_lstm_graph(
@@ -295,7 +329,7 @@ t = time.time()
 train_network(g, rawdata_path, chr = 'chr1', num_epochs=num_epochs, 
 	num_steps = num_steps, batch_size = batch_size, num_class =num_classes,
 	verbose = True, save=True)
-print("It took", time.time() - t, "seconds to train for 3 epochs.")
+print("\nIt took", time.time() - t, "seconds to train for 3 epochs.")
 
 #data = prepare_data(rawdata_path, chr, num_classes,batch_size, num_steps, name=None)
 #for X, Y in generate_epoch(data['test', batch_size, num_steps):
